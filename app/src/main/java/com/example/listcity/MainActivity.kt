@@ -1,5 +1,6 @@
 package com.example.listcity
 
+import android.R
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -26,6 +28,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import com.example.listcity.ui.theme.ListCityTheme
 
 class MainActivity : ComponentActivity() {
@@ -41,6 +45,7 @@ class MainActivity : ComponentActivity() {
                     CityListScreen(
                         cities = cityRepository.cities,
                         onAddCity = { cityRepository.addCity(it) },
+                        onDeleteCity = { cityRepository.deleteCity(it) },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -72,6 +77,10 @@ class CityRepository {
     fun addCity(city: String) {
         _cities.add(city)
     }
+
+    fun deleteCity(city: String) {
+        _cities.remove(city)
+    }
 }
 
 
@@ -79,12 +88,15 @@ class CityRepository {
 fun CityListScreen(
     cities: List<String>,
     onAddCity: (String) -> Unit,
+    onDeleteCity: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var newCityName by remember {mutableStateOf("")}
+    var selectedCity by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
-        Row(modifier = Modifier.padding(16.dp)) {
+        Row(
+            modifier = Modifier.padding(16.dp)) {
             OutlinedTextField(
                 value = newCityName,
                 onValueChange = {newCityName=it},
@@ -104,23 +116,36 @@ fun CityListScreen(
             ) {
                 Text("Add City")
             }
+            Button(
+                onClick = {
+                    selectedCity?.let { onDeleteCity(it) }
+                }
+            ) {
+                Text("Delete City")
+            }
         }
 
-        LazyColumn(modifier = modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(cities) { city ->
-                CityRow(city = city)
+                CityRow(
+                    city = city,
+                    selected = (city == selectedCity),
+                    onClick = { selectedCity = city }
+                )
             }
         }
     }
 }
 
 @Composable
-fun CityRow(city: String) {
+fun CityRow(city: String, selected: Boolean, onClick: () -> Unit) {
     Text(
         text = city,
         fontSize = 28.sp,
         modifier = Modifier
             .fillMaxWidth()
+            .selectable(selected = selected, onClick = onClick)
+            .background(if (selected) Color.LightGray else Color.Transparent)
             .padding(horizontal = 18.dp, vertical = 14.dp)
     )
 }
